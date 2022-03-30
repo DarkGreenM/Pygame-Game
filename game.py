@@ -3,6 +3,7 @@ from re import A
 from turtle import width
 import pygame
 import math
+import random
 pygame.init()
 
 ##### NO ANIMATION ######
@@ -49,7 +50,7 @@ class player(object):
             self.cooldown = True
             self.isDashing = True
             pygame.time.set_timer(self.dash_cooldown, 10)
-            pygame.time.set_timer(self.isdashing_cooldown, 300)
+            pygame.time.set_timer(self.isdashing_cooldown, 750)
             
             #Checks for direction and according to it dashes to that direction
             if self.Direction == 1:
@@ -131,17 +132,24 @@ class PlayerBullet:
         pygame.display.update()
             
 class Enemy:
-    def __init__(self, x, y):
-        self.x = 100
-        self.y = 400
-        self.height = 60
-        self.width = 40
+    def __init__(self, x, y, height, width):
+        self.x = x
+        self.y = y
+        self.height = height
+        self.width = width
         self.vel = 3
+        self.health = 100
+
         
-    def main(self, win):    
+        
+    def main(self, win):   
+        self.enemy_x = random.randint(0, screenWidth)
+        self.enemy_y = random.randint(0, screenHeight)
+        
         pygame.draw.rect(win, (0, 255, 0), (self.x, self.y, self.width, self.height))
-        #enemy_list.append(Enemy(self.x, self.y, self.width, self.height))
-        pygame.display.update()          
+        enemy_list.append(Enemy(self.x, self.y, self.width, self.height))
+        pygame.display.update()
+              
         
  
 #Creating lists for the bullets and enemies 
@@ -150,9 +158,12 @@ enemy_list = []
  
 #mainloop   
               
+start_ticks = pygame.time.get_ticks()              
+              
 clock = pygame.time.Clock()                    
 #X, Y, Width, Height
 iden = player(40, 40, 40, 60)
+enemy = Enemy(random.randint(1, 500), random.randint(1, 400), 60, 30)
 iden.run = True
 while iden.run:
     pygame.time.delay(100)
@@ -163,17 +174,23 @@ while iden.run:
     iden.movment(win)    
     iden.dash(win)
 
+    
     #Window color
     win.fill((0, 0, 0))
     #Chracter size & color
+    enemy.main(win)
+    
     pygame.draw.rect(win, (255, 0, 0), (iden.x, iden.y, iden.width, iden.height))
+    
     pygame.display.update()
+    
+    seconds = (pygame.time.get_ticks() - start_ticks)/990
     
     #Checks if there is a bullet or enemy in the list of bullets/enemies and then updates the screen if there is one
     for bullet in player_bullets:
         bullet.main(win)
-    for enemy in enemy_list:
-        enemy.main(win)
+    #for enemy in enemy_list:
+        #enemy.main(win)
     
     clock.tick(60)
     

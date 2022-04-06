@@ -17,6 +17,7 @@ win = pygame.display.set_mode((screenWidth, screenHeight))
 #Game name
 pygame.display.set_caption("Game")
 
+
 class player(object):
     def __init__(self, x, y, width, height,):
         #Variables for playable character
@@ -25,6 +26,7 @@ class player(object):
         self.width = width
         self.height = height
         self.vel = 10
+        self.health = 100
 
         
         #Variables for Dash
@@ -41,6 +43,10 @@ class player(object):
         self.bullet_cd = False
         #Keys
         self.keys = pygame.key.get_pressed()
+        
+        self.gun_type = 2
+        self.gun_speed = 1000
+        #Gun Type: 1, Default piston | 2, Smg | 3, Sniper
         
 
     
@@ -105,7 +111,7 @@ class player(object):
         #Creates a bullet and starts timer for next one if player is not dashing and cooldown is off        
             if event.type == pygame.MOUSEBUTTONDOWN and self.isDashing == False and self.bullet_cd == False:
                 self.bullet_cd = True
-                pygame.time.set_timer(self.bullet_cooldown, 1000)
+                pygame.time.set_timer(self.bullet_cooldown, self.gun_speed)
                 player_bullets.append(PlayerBullet(self.x, self.y, mouse_x, mouse_y))
 
 #Class for creating the bullet that the player shoots                
@@ -128,8 +134,9 @@ class PlayerBullet:
         self.y -= int(self.y_vel)
         
         #Draws the object for the bullet
-        pygame.draw.circle(win, (0,0,255), (self.x + (self.width/2), self.y), 5)
+        pygame.draw.circle(win, (0, 0, 255), (self.x + (self.width/2), self.y), 5)
         pygame.display.update()
+            
             
 class Enemy:
     def __init__(self, x, y, height, width):
@@ -147,15 +154,68 @@ class Enemy:
         self.enemy_y = random.randint(0, screenHeight)
         
         pygame.draw.rect(win, (0, 255, 0), (self.x, self.y, self.width, self.height))
-        enemy_list.append(Enemy(self.x, self.y, self.width, self.height))
+        #enemy_list.append(Enemy(self.x, self.y, self.width, self.height))
         pygame.display.update()
+        
+        self.enemy_top_right = self.x + enemy.width
+        self.enemy_top_left = self.x
+        self.enemy_bottom_right = (self.x + enemy.width) - enemy.height
+        self.enemy_bottom_right = self.y - enemy.height
+        
+    def enemy_movement(self, win):
+        
+        if iden.x > self.x:
+            self.x += self.vel
+        if iden.x < self.x:
+            self.x -= self.vel
+        if iden.y > self.y:
+            self.y += self.vel
+        if iden.y < self.y:
+            self.y -= self.vel
+    
+    def damage_enemy(self,win):
+        
+        if enemy.x < bullet.x < (enemy.x + enemy.width) and (enemy.y + enemy.height) > bullet.y > enemy.y:
+            
+            #Pistol
+            if iden.gun_type == 1:
+                bullet.speed = 30
+                iden.gun_speed = 1000
+                enemy.health -= 50
+                print(enemy.health)
+                if bullet in player_bullets:
+                    player_bullets.remove(bullet)
+                if enemy.health == 0:
+                    enemy_list.remove(enemy)
+                
+                    
+            #SMG        
+            if iden.gun_type == 2:
+                bullet.speed = 45
+                iden.gun_speed = 500
+                enemy.health -= 25
+                print(enemy.health)
+                if bullet in player_bullets:
+                    player_bullets.remove(bullet)
+                if enemy.health == 0:
+                    enemy_list.remove(enemy)
+                    
+                    
+            #Sniper
+            if iden.gun_type == 3:
+                bullet.speed = 60
+                iden.gun_speed = 2000
+                enemy.health -= 100
+                print(enemy.health)
+                if enemy.health == 0:
+                    enemy_list.remove(enemy)    
               
         
  
 #Creating lists for the bullets and enemies 
 player_bullets = []
 enemy_list = []
- 
+enemy_spawn = 1
 #mainloop   
               
 start_ticks = pygame.time.get_ticks()              
@@ -164,9 +224,13 @@ clock = pygame.time.Clock()
 #X, Y, Width, Height
 iden = player(40, 40, 40, 60)
 enemy = Enemy(random.randint(1, 500), random.randint(1, 400), 60, 30)
+
 iden.run = True
 while iden.run:
     pygame.time.delay(100)
+       
+    #Second Counter
+    seconds = (pygame.time.get_ticks() - start_ticks)/990  
        
     mouse_x, mouse_y = pygame.mouse.get_pos() 
        
@@ -177,20 +241,39 @@ while iden.run:
     
     #Window color
     win.fill((0, 0, 0))
-    #Chracter size & color
-    enemy.main(win)
-    
-    pygame.draw.rect(win, (255, 0, 0), (iden.x, iden.y, iden.width, iden.height))
-    
-    pygame.display.update()
-    
-    seconds = (pygame.time.get_ticks() - start_ticks)/990
     
     #Checks if there is a bullet or enemy in the list of bullets/enemies and then updates the screen if there is one
     for bullet in player_bullets:
         bullet.main(win)
-    #for enemy in enemy_list:
-        #enemy.main(win)
+        
+        #removing bullet if out of screen
+        if bullet.x > screenWidth:
+            player_bullets.remove(bullet)
+        elif bullet.x < 0:
+            player_bullets.remove(bullet)
+        elif bullet.y > screenHeight:
+            player_bullets.remove(bullet)
+        elif bullet.y < 0:
+            player_bullets.remove(bullet)
+        
+    for enemy in enemy_list:
+        enemy.main(win)
+        enemy.enemy_movement(win)
+        enemy.damage_enemy(win)
+
+    
+    if round(seconds, 1) == enemy_spawn:
+        enemy_list.append(Enemy(random.randint(1, 500), random.randint(1, 400), 60, 30))
+        enemy_spawn += 10
+        
+    
+         
+        
+    #Player size & color    
+    pygame.draw.rect(win, (255, 0, 0), (iden.x, iden.y, iden.width, iden.height))
+    
+    pygame.display.update()
+
     
     clock.tick(60)
     
